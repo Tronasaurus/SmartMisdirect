@@ -1,0 +1,7 @@
+## Interface: 50400
+## Title: SmartMisdirect
+## Notes: Automatically selects the best target for Misdirection or Tricks of the Trade
+## Author: Proxying, refactored by Kovi, ported to Addon by Tronasaurus
+## Version: 1.0.0
+
+Core.lua

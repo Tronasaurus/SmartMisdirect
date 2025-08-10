@@ -1,28 +1,35 @@
--- SmartMisdirect Addon
+-- SmartMisdirect Addon (MoP Classic Version)
 local addonName = ...
+
+-- ==== CLASS GATE ============================================================
+local classID = select(3, UnitClass("player"))
+local IS_HUNTER = (classID == 3)
+local IS_ROGUE  = (classID == 4)
+if not (IS_HUNTER or IS_ROGUE) then
+    -- Not a Hunter or Rogue: do nothing (no frames, no events, no timers)
+    return
+end
+-- ============================================================================
+
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 frame:RegisterEvent("UNIT_PET")
 frame:RegisterEvent("PET_BAR_UPDATE")
 frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-frame:RegisterEvent("PLAYER_PVP_TALENT_UPDATE")
-frame:RegisterEvent("PVP_WORLDSTATE_UPDATE")
-frame:RegisterEvent("PVP_TIMER_UPDATE")
 
 local auraBtn
 local spellName
 local updateRequired = true
 
--- Customizable Settings
+-- User Settings (you can move this to Config.lua if you want later)
 local defaultUnit = "target"
 local petFallback = true
 local priorityTargetName = "Kovi"
 local priorityTargetNameServer = "Area52"
-local customMainTankStatus = {} -- e.g. { true, false }
 local debugOn = false
 
--- Util
+-- Utility
 local function DebugPrint(msg)
     if debugOn then print("|cFFFFCC00[SmartMisdirect DEBUG]:|r " .. msg) end
 end
@@ -42,17 +49,15 @@ end
 
 -- Determine correct spell
 local misdirectName = GetSpellInfo(34477)
-local interlopeName = GetSpellInfo(248518)
 local tricksName = GetSpellInfo(57934)
 
-local function setInterlopeOrMisdirect()
-    local class = select(3, UnitClass("player"))
-    if class == 4 then
+local function setMisdirectOrTricks()
+    if classID == 4 then -- Rogue
         spellName = tricksName
         ButtonSetAttribute(auraBtn, "spell", 57934)
-    else
-        spellName = IsPlayerSpell(248518) and interlopeName or misdirectName
-        ButtonSetAttribute(auraBtn, "spell", IsPlayerSpell(248518) and 248518 or 34477)
+    else                -- Hunter
+        spellName = misdirectName
+        ButtonSetAttribute(auraBtn, "spell", 34477)
     end
 end
 
@@ -62,7 +67,8 @@ local function smart_find_target()
     local isInRaid = IsInRaid()
 
     if IsInGroup() then
-        for i = 1, GetNumGroupMembers() do
+        local count = GetNumGroupMembers()
+        for i = 1, count do
             local unit = isInRaid and ("raid" .. i) or ("party" .. i)
             if UnitExists(unit) and UnitGroupRolesAssigned(unit) == "TANK" then
                 local name, realm = UnitName(unit)
@@ -81,8 +87,8 @@ local function smart_find_target()
     if not target_unit then
         if backup_target then
             target_unit = backup_target
-        elseif petFallback and UnitExists("pet") then
-            target_unit = IsPlayerSpell(248518) and "player" or "pet"
+        elseif petFallback and UnitExists("pet") and IS_HUNTER then
+            target_unit = "pet"
         else
             target_unit = defaultUnit
         end
@@ -94,7 +100,7 @@ local function smart_find_target()
     end
 end
 
--- Frame creation (SecureActionButton)
+-- Create the secure button
 if not SmartMisdirect then
     auraBtn = CreateFrame("Button", "SmartMisdirect", UIParent, "SecureActionButtonTemplate")
 else
@@ -103,9 +109,9 @@ end
 
 auraBtn:SetAttribute("type", "spell")
 ButtonSetAttribute(auraBtn, "unit", defaultUnit)
-setInterlopeOrMisdirect()
+setMisdirectOrTricks()
 
--- 5-second metronome
+-- Run the targeting logic every 5 seconds when out of combat
 C_Timer.NewTicker(5, function()
     if not InCombatLockdown() and updateRequired then
         smart_find_target()
@@ -118,7 +124,5 @@ frame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_ENTERING_WORLD" or event == "GROUP_ROSTER_UPDATE" or event == "UNIT_PET"
         or event == "PET_BAR_UPDATE" or event == "PLAYER_SPECIALIZATION_CHANGED" then
         updateRequired = true
-    elseif event == "PVP_WORLDSTATE_UPDATE" or event == "PLAYER_PVP_TALENT_UPDATE" or event == "PVP_TIMER_UPDATE" then
-        setInterlopeOrMisdirect()
     end
 end)

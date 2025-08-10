@@ -1,4 +1,4 @@
--- SmartMisdirect Addon (MoP Classic Version)
+
 local addonName = ...
 
 -- ==== CLASS GATE ============================================================
@@ -6,7 +6,7 @@ local classID = select(3, UnitClass("player"))
 local IS_HUNTER = (classID == 3)
 local IS_ROGUE  = (classID == 4)
 if not (IS_HUNTER or IS_ROGUE) then
-    -- Not a Hunter or Rogue: do nothing (no frames, no events, no timers)
+
     return
 end
 -- ============================================================================
@@ -22,7 +22,7 @@ local auraBtn
 local spellName
 local updateRequired = true
 
--- User Settings (you can move this to Config.lua if you want later)
+
 local defaultUnit = "target"
 local petFallback = true
 local priorityTargetName = "Kovi"
@@ -41,13 +41,13 @@ local function TableContains(t, val)
     return false
 end
 
--- Button setup
+
 local function ButtonSetAttribute(button, attribute, value)
     button:SetAttribute(attribute, value)
     DebugPrint("Set " .. attribute .. " to " .. tostring(value))
 end
 
--- Determine correct spell
+
 local misdirectName = GetSpellInfo(34477)
 local tricksName = GetSpellInfo(57934)
 
@@ -61,7 +61,7 @@ local function setMisdirectOrTricks()
     end
 end
 
--- Main logic
+
 local function smart_find_target()
     local target_unit, backup_target
     local isInRaid = IsInRaid()
@@ -100,7 +100,7 @@ local function smart_find_target()
     end
 end
 
--- Create the secure button
+
 if not SmartMisdirect then
     auraBtn = CreateFrame("Button", "SmartMisdirect", UIParent, "SecureActionButtonTemplate")
 else
@@ -111,7 +111,7 @@ auraBtn:SetAttribute("type", "spell")
 ButtonSetAttribute(auraBtn, "unit", defaultUnit)
 setMisdirectOrTricks()
 
--- Run the targeting logic every 5 seconds when out of combat
+
 C_Timer.NewTicker(5, function()
     if not InCombatLockdown() and updateRequired then
         smart_find_target()
@@ -119,7 +119,7 @@ C_Timer.NewTicker(5, function()
     end
 end)
 
--- Events
+
 frame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_ENTERING_WORLD" or event == "GROUP_ROSTER_UPDATE" or event == "UNIT_PET"
         or event == "PET_BAR_UPDATE" or event == "PLAYER_SPECIALIZATION_CHANGED" then
